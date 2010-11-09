@@ -16,15 +16,15 @@ describe ZeroJobs::JobSender do
     ZeroJobs::JobSender.context.should == "some_context"
   end
   
-  it "allows setting of the socket" do
-    ZeroJobs::JobSender.socket = "some_socket"
-    ZeroJobs::JobSender.socket.should == "some_socket"
+  it "allows setting of the push_socket" do
+    ZeroJobs::JobSender.push_socket = "some_socket"
+    ZeroJobs::JobSender.push_socket.should == "some_socket"
   end
 
   it "should raise if asking for socket without configuration" do
-    ZeroJobs::JobSender.socket = nil
+    ZeroJobs::JobSender.push_socket = nil
     lambda do
-      ZeroJobs::JobSender.socket
+      ZeroJobs::JobSender.push_socket
     end.should raise_error(ZeroJobs::JobSender::UninitializedZMQ)
   end
   
@@ -74,7 +74,7 @@ describe ZeroJobs::JobSender do
     ZeroJobs::JobSender.should_receive(:context).and_return(mock_context)
     
     ZeroJobs::JobSender.initialize_zmq_push_socket
-    ZeroJobs::JobSender.socket.should == mock_context.socket
+    ZeroJobs::JobSender.push_socket.should == mock_context.socket
   end
 
   it "should send job throught a PUSH socket" do

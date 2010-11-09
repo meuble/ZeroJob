@@ -4,7 +4,7 @@ module ZeroJobs
     class UninitializedZMQ < Exception; end
       
     class << self
-      attr_accessor :socket_push_endpoint, :worker_instance, :context, :socket
+      attr_accessor :socket_push_endpoint, :worker_instance, :context, :push_socket
     end
     
     def self.socket_push_endpoint
@@ -19,8 +19,8 @@ module ZeroJobs
       @context || raise_uninitialized_zmq
     end
     
-    def self.socket
-      @socket || raise_uninitialized_zmq
+    def self.push_socket
+      @push_socket || raise_uninitialized_zmq
     end
     
     def self.raise_unconfigured_exception
@@ -47,13 +47,13 @@ module ZeroJobs
     end
     
     def self.initialize_zmq_push_socket
-      self.socket = self.context.socket(ZMQ::PUSH)
-      self.socket.bind(self.socket_push_endpoint)
+      self.push_socket = self.context.socket(ZMQ::PUSH)
+      self.push_socket.bind(self.socket_push_endpoint)
     end
 
     def self.initialize_zmq_pull_socket
-      self.socket = self.context.socket(ZMQ::PULL)
-      self.socket.bind(self.socket_pull_endpoint)
+      self.pull_socket = self.context.socket(ZMQ::PULL)
+      self.pull_socket.bind(self.socket_pull_endpoint)
     end
     
     def self.job_to_json(job)
@@ -63,7 +63,7 @@ module ZeroJobs
     end
     
     def self.send_job(job)
-      self.socket.send(self.job_to_json(job))
+      self.push_socket.send(self.job_to_json(job))
     end
   end
 end
