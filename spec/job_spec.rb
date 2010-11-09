@@ -2,6 +2,7 @@ require File.dirname(__FILE__) + '/database'
 require "spec_helper"
 
 class SampleObject < ActiveRecord::Base
+  def some_method; self.update_attribute(:count, self.count + 1); end
 end
 
 describe ZeroJobs::Job do
@@ -62,7 +63,34 @@ describe ZeroJobs::Job do
     obj.should == sample_object
   end
   
-  it "should have an object" do
+  it "should have a nil object" do
     @job.object.should be_nil
+  end
+  
+  it "should have an object" do
+    sample_object = SampleObject.create(:count => 42)
+    @job.should_receive(:load).once().and_return(sample_object)
+    @job.object.should == sample_object
+    @job.object.should == sample_object
+  end
+  
+  it "should kepp an object" do
+    dumped_obj = stub
+    loaded_obj = stub
+    @job.should_receive(:dump).and_return(dumped_obj)
+    @job.object = Object.new
+    @job.raw_object.should == dumped_obj
+    
+    @job.should_receive(:load).with(dumped_obj).and_return(loaded_obj)
+    @job.object.should == loaded_obj
+  end
+  
+  it "should enqueue job to save it and send it" do
+    sample_object = SampleObject.create(:count => 42)
+    lambda do
+      job = ZeroJobs::Job.enqueue sample_object, :some_method
+      job.object.should == sample_object
+      job.message.should == :some_method
+    end.should change(ZeroJobs::Job, :count)
   end
 end

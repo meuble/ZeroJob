@@ -11,7 +11,8 @@ ActiveRecord::Base.default_timezone = :utc if Time.zone.nil?
 ActiveRecord::Schema.define do
 
   create_table :zero_jobs, :force => true do |table|
-    table.text     :raw_object
+    table.text :raw_object
+    table.string :message
     # table.string   :last_error
     # table.datetime :run_at
     # table.datetime :failed_at

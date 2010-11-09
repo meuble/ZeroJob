@@ -5,8 +5,16 @@ module ZeroJobs
     class DumpError < StandardError
     end
     
+    def self.enqueue(obj, mess)
+      job = self.create(:object => obj, :message => mess)
+    end
+    
     def object
-      @object
+      @object ||= load(self.raw_object)
+    end
+    
+    def object=(value)
+      self.raw_object = self.dump(value)
     end
     
     def dump(obj)
@@ -18,11 +26,15 @@ module ZeroJobs
     end
     
     def load(str)
-      hash = JSON.parse(str)
+      begin
+        hash = JSON.parse(str.to_s)
+      rescue JSON::ParserError => e
+        return nil
+      end
       case hash['type']
       when 'class'                  then hash['class_name'].constantize
       when 'active_record_instance' then hash['class_name'].constantize.find(hash['id'].to_i)
-      else arg
+      else nil
       end
     end
 
