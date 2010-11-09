@@ -1,5 +1,3 @@
-require 'rubygems'
-require 'active_record'
 gem 'sqlite3-ruby'
 
 

@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/database'
 require "spec_helper"
+require File.dirname(__FILE__) + '/database'
 
 class SampleObject < ActiveRecord::Base
   def some_method; self.update_attribute(:count, self.count + 1); end
@@ -87,6 +87,7 @@ describe ZeroJobs::Job do
   
   it "should enqueue job to save it and send it" do
     sample_object = SampleObject.create(:count => 42)
+    ZeroJobs::Job.should_receive(:send_job)
     lambda do
       job = ZeroJobs::Job.enqueue sample_object, :some_method
       job.object.should == sample_object
