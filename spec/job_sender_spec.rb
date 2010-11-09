@@ -6,15 +6,39 @@ describe ZeroJobs::JobSender do
     ZeroJobs::JobSender.worker_instance.should == "123456"
   end
   
-  it "allows setting of the socket_endpoint" do
-    ZeroJobs::JobSender.socket_endpoint = "some_endpoint"
-    ZeroJobs::JobSender.socket_endpoint.should == "some_endpoint"
+  it "allows setting of the socket_push_endpoint" do
+    ZeroJobs::JobSender.socket_push_endpoint = "some_endpoint"
+    ZeroJobs::JobSender.socket_push_endpoint.should == "some_endpoint"
   end
   
-  it "should raise if asking for socket_endpoint without configuration" do
-    ZeroJobs::JobSender.socket_endpoint = nil
+  it "allows setting of the context" do
+    ZeroJobs::JobSender.context = "some_context"
+    ZeroJobs::JobSender.context.should == "some_context"
+  end
+  
+  it "allows setting of the socket" do
+    ZeroJobs::JobSender.socket = "some_socket"
+    ZeroJobs::JobSender.socket.should == "some_socket"
+  end
+
+  it "should raise if asking for socket without configuration" do
+    ZeroJobs::JobSender.socket = nil
     lambda do
-      ZeroJobs::JobSender.socket_endpoint
+      ZeroJobs::JobSender.socket
+    end.should raise_error(ZeroJobs::JobSender::UninitializedZMQ)
+  end
+  
+  it "should raise if asking for context without configuration" do
+    ZeroJobs::JobSender.context = nil
+    lambda do
+      ZeroJobs::JobSender.context
+    end.should raise_error(ZeroJobs::JobSender::UninitializedZMQ)
+  end
+  
+  it "should raise if asking for socket_push_endpoint without configuration" do
+    ZeroJobs::JobSender.socket_push_endpoint = nil
+    lambda do
+      ZeroJobs::JobSender.socket_push_endpoint
     end.should raise_error(ZeroJobs::JobSender::NotConfigured)
   end
   
@@ -28,30 +52,38 @@ describe ZeroJobs::JobSender do
   it "can load the configuration via zero_jobs.yml" do
     ZeroJobs::JobSender.load_from_yaml_config_file
     ZeroJobs::JobSender.worker_instance.should == "1234fromyaml"
-    ZeroJobs::JobSender.socket_endpoint.should == "fromyaml"
+    ZeroJobs::JobSender.socket_push_endpoint.should == "fromyaml"
   end
   
   it "should allow setting the configuration in bulk" do
-    ZeroJobs::JobSender.configuration = {:worker_instance => 1234, :socket_endpoint => "someendpoint2"}
+    ZeroJobs::JobSender.configuration = {:worker_instance => 1234, :socket_push_endpoint => "someendpoint2"}
     ZeroJobs::JobSender.worker_instance.should == 1234
-    ZeroJobs::JobSender.socket_endpoint.should == "someendpoint2"
+    ZeroJobs::JobSender.socket_push_endpoint.should == "someendpoint2"
   end
-  
-  it "should initialize ZMQ connction" do
-    mock_context = mock(:socket => mock(:blind))
+
+  it "should initialize ZMQ context" do
+    mock_context = mock()
     ZMQ::Context.should_receive(:new).and_return(mock_context)
     
-    ZeroJobs::JobSender.initialize_zmq_socket
+    ZeroJobs::JobSender.initialize_zmq_context
     ZeroJobs::JobSender.context.should == mock_context
+  end
+  
+  it "should initialize ZMQ PUSH connction" do
+    mock_context = mock(:socket => mock(:blind))
+    ZeroJobs::JobSender.should_receive(:context).and_return(mock_context)
+    
+    ZeroJobs::JobSender.initialize_zmq_push_socket
     ZeroJobs::JobSender.socket.should == mock_context.socket
   end
 
-  it "should send job throught socket" do
+  it "should send job throught a PUSH socket" do
     job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
     mock_context = mock(:socket => mock(:blind))
     mock_context.socket.should_receive(:send)
-    ZMQ::Context.should_receive(:new).and_return(mock_context)
-    ZeroJobs::JobSender.initialize_zmq_socket
+    ZeroJobs::JobSender.should_receive(:context).and_return(mock_context)
+
+    ZeroJobs::JobSender.initialize_zmq_push_socket
     ZeroJobs::JobSender.send_job(job)
   end
   

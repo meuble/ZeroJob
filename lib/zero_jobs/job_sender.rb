@@ -1,25 +1,38 @@
 module ZeroJobs
   module JobSender
     class NotConfigured < Exception; end
+    class UninitializedZMQ < Exception; end
       
     class << self
-      attr_accessor :socket_endpoint, :worker_instance, :context, :socket
+      attr_accessor :socket_push_endpoint, :worker_instance, :context, :socket
     end
     
-    def self.socket_endpoint
-      @socket_endpoint || raise_unconfigured_exception    
+    def self.socket_push_endpoint
+      @socket_push_endpoint || raise_unconfigured_exception    
     end
 
     def self.worker_instance
       @worker_instance || raise_unconfigured_exception
     end
     
+    def self.context
+      @context || raise_uninitialized_zmq
+    end
+    
+    def self.socket
+      @socket || raise_uninitialized_zmq
+    end
+    
     def self.raise_unconfigured_exception
       raise NotConfigured.new("No configuration provided.")
     end
     
+    def self.raise_uninitialized_zmq
+      raise UninitializedZMQ.new("ZMQ is not ready.")
+    end
+    
     def self.configuration=(hash)
-      self.socket_endpoint = hash[:socket_endpoint]
+      self.socket_push_endpoint = hash[:socket_push_endpoint]
       self.worker_instance = hash[:worker_instance]
     end
     
@@ -29,11 +42,18 @@ module ZeroJobs
       self.configuration = config.with_indifferent_access
     end
     
-    def self.initialize_zmq_socket
-      self.load_from_yaml_config_file
-      @context = ZMQ::Context.new(1)
-      @socket = @context.socket(ZMQ::PUSH)
-      @socket.bind(@socket_endpoint)
+    def self.initialize_zmq_context
+      self.context = ZMQ::Context.new(1)
+    end
+    
+    def self.initialize_zmq_push_socket
+      self.socket = self.context.socket(ZMQ::PUSH)
+      self.socket.bind(self.socket_push_endpoint)
+    end
+
+    def self.initialize_zmq_pull_socket
+      self.socket = self.context.socket(ZMQ::PULL)
+      self.socket.bind(self.socket_pull_endpoint)
     end
     
     def self.job_to_json(job)
@@ -43,7 +63,7 @@ module ZeroJobs
     end
     
     def self.send_job(job)
-      @socket.send(self.job_to_json(job))
+      self.socket.send(self.job_to_json(job))
     end
   end
 end
