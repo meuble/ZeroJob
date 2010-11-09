@@ -25,7 +25,7 @@ describe ZeroJobs::Job do
     
     lambda do
       json_result = JSON.parse(result)
-      json_result.should == {"class_name" => "SampleObject", "id" => 1, "type" => "active_record_instace"}
+      json_result.should == {"class_name" => "SampleObject", "id" => 1, "type" => "active_record_instance"}
     end.should_not raise_error
   end
   
@@ -46,6 +46,20 @@ describe ZeroJobs::Job do
     sample_object = SampleObject
     @job.should_receive(:class_to_string)
     @job.dump(sample_object)
+  end
+  
+  it "should load object from stringified class" do
+    obj = @job.load('{"class_name":"SampleObject","type":"class"}')
+    obj.class.should == Class
+    obj.name.should == "SampleObject"
+  end
+  
+  it "should load object from stringified instance" do
+    sample_object = SampleObject.create(:count => 2)
+    
+    obj = @job.load('{"class_name":"SampleObject","type":"active_record_instance","id":' + sample_object.id.to_s + '}')
+    obj.class.should == SampleObject
+    obj.should == sample_object
   end
   
   it "should have an object" do
