@@ -7,6 +7,12 @@ module ZeroJobs
     
     def self.enqueue(obj, mess)
       job = self.create(:object => obj, :message => mess)
+      if job.new_record?
+        raise ArgumentError.new("Can't save job : #{job.errors.full_message}")
+      else
+        JobSender.send_job(job)
+      end
+      job
     end
     
     def object

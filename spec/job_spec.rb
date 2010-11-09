@@ -83,7 +83,7 @@ describe ZeroJobs::Job do
   
   it "should enqueue job to save it and send it" do
     sample_object = SampleObject.create(:count => 42)
-    ZeroJobs::Job.should_receive(:send_job)
+    ZeroJobs::JobSender.should_receive(:send_job)
     lambda do
       job = ZeroJobs::Job.enqueue sample_object, :some_method
       job.object.should == sample_object
