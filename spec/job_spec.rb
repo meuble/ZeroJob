@@ -1,10 +1,6 @@
 require "spec_helper"
 require File.dirname(__FILE__) + '/database'
 
-class SampleObject < ActiveRecord::Base
-  def some_method; self.update_attribute(:count, self.count + 1); end
-end
-
 describe ZeroJobs::Job do
   before(:each) do
     @job = ZeroJobs::Job.new
@@ -26,7 +22,7 @@ describe ZeroJobs::Job do
     
     lambda do
       json_result = JSON.parse(result)
-      json_result.should == {"class_name" => "SampleObject", "id" => 1, "type" => "active_record_instance"}
+      json_result.should == {"class_name" => "SampleObject", "id" => sample_object.id, "type" => "active_record_instance"}
     end.should_not raise_error
   end
   

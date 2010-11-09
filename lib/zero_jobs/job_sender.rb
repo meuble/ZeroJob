@@ -35,6 +35,15 @@ module ZeroJobs
       @socket = @context.socket(ZMQ::PUSH)
       @socket.bind(@socket_endpoint)
     end
-
+    
+    def self.job_to_json(job)
+      {:class => job.class.name,
+        :id => job.id,
+        :message => job.message}.to_json
+    end
+    
+    def self.send_job(job)
+      @socket.send(self.job_to_json(job))
+    end
   end
 end

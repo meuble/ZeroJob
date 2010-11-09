@@ -46,4 +46,23 @@ describe ZeroJobs::JobSender do
     ZeroJobs::JobSender.socket.should == mock_context.socket
   end
 
+  it "should send job throught socket" do
+    job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
+    mock_context = mock(:socket => mock(:blind))
+    mock_context.socket.should_receive(:send)
+    ZMQ::Context.should_receive(:new).and_return(mock_context)
+    ZeroJobs::JobSender.initialize_zmq_socket
+    ZeroJobs::JobSender.send_job(job)
+  end
+  
+  it "should tranform job to json" do
+    job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
+    result = ZeroJobs::JobSender.job_to_json(job)
+    result.class.should == String
+    
+    lambda do
+      json_result = JSON.parse(result)
+      json_result.should == {"class" => job.class.name, "id" => job.id, "message" => job.message.to_s}
+    end.should_not raise_error    
+  end
 end
