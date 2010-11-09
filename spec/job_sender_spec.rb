@@ -25,12 +25,10 @@ describe ZeroJobs::JobSender do
     end.should raise_error(ZeroJobs::JobSender::NotConfigured)
   end
   
-  describe "with a config file" do
-    it "can load the configuration via zero_jobs.yml" do
-      ZeroJobs::JobSender.load_from_yaml_config_file
-      ZeroJobs::JobSender.worker_instance.should == "1234fromyaml"
-      ZeroJobs::JobSender.socket_endpoint.should == "fromyaml"
-    end
+  it "can load the configuration via zero_jobs.yml" do
+    ZeroJobs::JobSender.load_from_yaml_config_file
+    ZeroJobs::JobSender.worker_instance.should == "1234fromyaml"
+    ZeroJobs::JobSender.socket_endpoint.should == "fromyaml"
   end
   
   it "should allow setting the configuration in bulk" do
@@ -47,4 +45,5 @@ describe ZeroJobs::JobSender do
     ZeroJobs::JobSender.context.should == mock_context
     ZeroJobs::JobSender.socket.should == mock_context.socket
   end
+
 end
