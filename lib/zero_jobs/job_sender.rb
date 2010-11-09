@@ -3,7 +3,7 @@ module ZeroJobs
     class NotConfigured < Exception; end
       
     class << self
-      attr_accessor :socket_endpoint, :worker_instance
+      attr_accessor :socket_endpoint, :worker_instance, :context, :socket
     end
     
     def self.socket_endpoint
@@ -28,5 +28,13 @@ module ZeroJobs
       raise NotConfigured.new("Unable to load configuration for #{::Rails.env} from zero_jobs.yml. Is it set up?") if config.nil?
       self.configuration = config.with_indifferent_access
     end
+    
+    def self.initialize_zmq_socket
+      self.load_from_yaml_config_file
+      @context = ZMQ::Context.new(1)
+      @socket = @context.socket(ZMQ::PUSH)
+      @socket.bind(@socket_endpoint)
+    end
+
   end
 end

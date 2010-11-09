@@ -25,16 +25,26 @@ describe ZeroJobs::JobSender do
     end.should raise_error(ZeroJobs::JobSender::NotConfigured)
   end
   
-  it "can load the configuration via zero_jobs.yml" do
-    ::Rails=stub(:root=>File.dirname(__FILE__), :env => "spec")
-    ZeroJobs::JobSender.load_from_yaml_config_file
-    ZeroJobs::JobSender.worker_instance.should == "1234fromyaml"
-    ZeroJobs::JobSender.socket_endpoint.should == "fromyaml"
+  describe "with a config file" do
+    it "can load the configuration via zero_jobs.yml" do
+      ZeroJobs::JobSender.load_from_yaml_config_file
+      ZeroJobs::JobSender.worker_instance.should == "1234fromyaml"
+      ZeroJobs::JobSender.socket_endpoint.should == "fromyaml"
+    end
   end
   
   it "should allow setting the configuration in bulk" do
     ZeroJobs::JobSender.configuration = {:worker_instance => 1234, :socket_endpoint => "someendpoint2"}
     ZeroJobs::JobSender.worker_instance.should == 1234
     ZeroJobs::JobSender.socket_endpoint.should == "someendpoint2"
+  end
+  
+  it "should initialize ZMQ connction" do
+    mock_context = mock(:socket => mock(:blind))
+    ZMQ::Context.should_receive(:new).and_return(mock_context)
+    
+    ZeroJobs::JobSender.initialize_zmq_socket
+    ZeroJobs::JobSender.context.should == mock_context
+    ZeroJobs::JobSender.socket.should == mock_context.socket
   end
 end
