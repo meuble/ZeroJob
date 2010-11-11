@@ -4,11 +4,15 @@ module ZeroJobs
     class UninitializedZMQ < Exception; end
       
     class << self
-      attr_accessor :socket_push_endpoint, :worker_instance, :context, :push_socket
+      attr_accessor :socket_push_endpoint, :socket_pull_endpoint, :worker_instance, :context, :push_socket, :pull_socket
     end
     
     def self.socket_push_endpoint
       @socket_push_endpoint || raise_unconfigured_exception    
+    end
+    
+    def self.socket_pull_endpoint
+      @socket_pull_endpoint || raise_unconfigured_exception    
     end
 
     def self.worker_instance
@@ -23,6 +27,10 @@ module ZeroJobs
       @push_socket || raise_uninitialized_zmq
     end
     
+    def self.pull_socket
+      @pull_socket || raise_uninitialized_zmq
+    end
+    
     def self.raise_unconfigured_exception
       raise NotConfigured.new("No configuration provided.")
     end
@@ -33,6 +41,7 @@ module ZeroJobs
     
     def self.configuration=(hash)
       self.socket_push_endpoint = hash[:socket_push_endpoint]
+      self.socket_pull_endpoint = hash[:socket_pull_endpoint]
       self.worker_instance = hash[:worker_instance]
     end
     
@@ -53,13 +62,12 @@ module ZeroJobs
 
     def self.initialize_zmq_pull_socket
       self.pull_socket = self.context.socket(ZMQ::PULL)
-      self.pull_socket.bind(self.socket_pull_endpoint)
+      self.pull_socket.connect(self.socket_pull_endpoint)
     end
     
     def self.job_to_json(job)
       {:class => job.class.name,
-        :id => job.id,
-        :message => job.message}.to_json
+        :id => job.id}.to_json
     end
     
     def self.send_job(job)

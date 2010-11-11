@@ -15,6 +15,18 @@ module ZeroJobs
       job
     end
     
+    def perfom
+      self.object.send(self.message)
+    end
+    
+    def terminate!
+      self.destroy
+    end
+    
+    def log_error(e)
+      self.update_attributes(:failed_at => Time.now, :last_error =>  e.message + "\n" + e.backtrace.join("\n"))
+    end
+    
     def object
       @object ||= load(self.raw_object)
     end

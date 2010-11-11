@@ -90,4 +90,33 @@ describe ZeroJobs::Job do
       job.message.should == :some_method
     end.should change(ZeroJobs::Job, :count)
   end
+  
+  it "should perform the job" do
+    job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
+    ZeroJobs::Job.last.perfom
+    SampleObject.last.reload.count.should == 43
+  end
+  
+  it "should destroy the job" do
+    job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
+    lambda do
+      lambda do
+        ZeroJobs::Job.last.terminate!
+      end.should change(ZeroJobs::Job, :count)
+    end.should_not change(SampleObject, :count)
+  end
+  
+  it "should log an error" do
+    job = ZeroJobs::Job.create(:object => SampleObject.create(:count => 42), :message => :some_method)
+    job.failed_at.class.should == NilClass
+    job.last_error.blank?.should be_true
+    begin
+      raise Exception.new("Test message")
+    rescue Exception => e
+      job.log_error(e)
+    end
+    job.reload
+    job.failed_at.class.should == Time
+    job.last_error.blank?.should be_false
+  end
 end

@@ -12,7 +12,8 @@ ActiveRecord::Schema.define do
   create_table :zero_jobs, :force => true do |table|
     table.text :raw_object
     table.string :message
-
+    table.datetime :failed_at, :default => 0
+    table.text :last_error
     table.timestamps
   end
   
